@@ -172,7 +172,7 @@ if '__main__' == __name__:
         sys.exit(3)
     else:
         dst_ip = sys.argv[1]
-        for ttl in range(7, 20):
+        for ttl in range(4, 30):
             print "Testing TTL = %d" % ttl
             router_hits = main(*sys.argv[1:], ttl=ttl)
             for router_ip, hits in router_hits.items():
