@@ -175,7 +175,8 @@ if '__main__' == __name__:
         for ttl in range(7, 20):
             print "Testing TTL = %d" % ttl
             router_hits = main(*sys.argv[1:], ttl=ttl)
-            print router_hits
+            for router_ip, hits in router_hits.items():
+                print "%s: %d hits" % (router_ip, hits)
             total_hit = sum(router_hits.values())
             ratio = total_hit * 1.0 / MAX_PACKETS
             if ratio < 0.98 and ratio > 0.65:
