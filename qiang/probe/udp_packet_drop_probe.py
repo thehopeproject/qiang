@@ -41,18 +41,19 @@ TH_SYN = 0x02        # synchronize sequence numbers
 TH_ACK = 0x10        # acknowledgment number set
 ROOT_USER_ID = 0
 
-def main(dst, sport, ttl):
+def main(dst, dst_port, sport, ttl):
     iface, src, _ = networking.get_route(dst)
+    dst_port = int(dst_port)
     if ROOT_USER_ID == os.geteuid():
         sniffer = networking.create_sniffer(iface, src, dst)
-        probe = UdpPacketDropProbe(src, int(sport), dst, 53, int(ttl), sniffer)
+        probe = UdpPacketDropProbe(src, int(sport), dst, dst_port, int(ttl), sniffer)
         sniffer.start_sniffing()
         probe.poke()
         time.sleep(2)
         sniffer.stop_sniffing()
         report = probe.peek()
     else:
-        probe = UdpPacketDropProbe(src, int(sport), dst, 53, int(ttl), sniffer=None)
+        probe = UdpPacketDropProbe(src, int(sport), dst, dst_port, int(ttl), sniffer=None)
         probe.poke()
         time.sleep(2)
         report = probe.peek()
@@ -159,7 +160,7 @@ class UdpPacketDropProbe(object):
 
 if '__main__' == __name__:
     if 1 == len(sys.argv):
-        print('[Usage] ./udp_packet_drop_probe.py destination_ip sport ttl')
+        print('[Usage] ./udp_packet_drop_probe.py destination_ip destination_port sport ttl')
         sys.exit(3)
     else:
         main(*sys.argv[1:])
