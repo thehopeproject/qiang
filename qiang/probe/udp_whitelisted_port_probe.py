@@ -22,7 +22,12 @@ ERROR_NO_DATA = 11
 TH_SYN = 0x02        # synchronize sequence numbers
 TH_ACK = 0x10        # acknowledgment number set
 ROOT_USER_ID = 0
-MAX_PACKETS = 400
+'''
+Some parameters. Adjust them if needed.
+'''
+MAX_PACKETS = 400   # The number of packets to send during each test
+MAX_TESTS = 4       # Repeat the test for each port %MAX_TESTS% times
+NO_QOS_THRESHOLD = 4    # Minimum requirement for a port to be view as no QoS
 
 def main(dst, dst_port, sport, bandwidth="%d" % (1024 * 1024), ttl=20):
     iface, src, _ = networking.get_route(dst)
@@ -181,37 +186,46 @@ if '__main__' == __name__:
         if dst_port == 0 and src_port == 0:
             print "Error: Both dst_port and src_port is undefined."
             sys.exit(1)
+        print "You may want to adjust some parameters according to your network conditons."
         port = 0
         r = range(skip, 65535)
         if dst_port != 0 and src_port != 0:
             r = range(1)
         for port in r:
-            if dst_port == 0:
-                print "Testing dst_port %d..." % port
-                router_hits = main(dst_ip, port, src_port, bandwidth=bandwidth, ttl=ttl)
-            elif src_port == 0:
-                print "Testing src_port %d..." % port
-                router_hits = main(dst_ip, dst_port, port, bandwidth=bandwidth, ttl=ttl)
-            else:
-                print "Testing src_port %d and dst_port %d..." % (src_port, dst_port)
-                router_hits = main(dst_ip, dst_port, src_port, bandwidth=bandwidth, ttl=ttl)
+            no_qos_count = 0
+            for test_count in range(0, MAX_TESTS):
+                if dst_port == 0:
+                    print "Testing dst_port %d..." % port
+                    router_hits = main(dst_ip, port, src_port, bandwidth=bandwidth, ttl=ttl)
+                elif src_port == 0:
+                    print "Testing src_port %d..." % port
+                    router_hits = main(dst_ip, dst_port, port, bandwidth=bandwidth, ttl=ttl)
+                else:
+                    print "Testing src_port %d and dst_port %d..." % (src_port, dst_port)
+                    router_hits = main(dst_ip, dst_port, src_port, bandwidth=bandwidth, ttl=ttl)
 
-            total_hit = sum(router_hits.values())
-            ratio = total_hit * 1.0 / MAX_PACKETS
-            if ratio < 0.98 and ratio > 0.65:
-                print "QoS found, packet loss = %.02f%%." % ((1.0 - ratio) * 100)
-            elif ratio < 0.65:
-                print "[-]The target router doesn't give enough responses."
-                if log is not None:
-                    f = open(log, "a")
-                    f.write("[?]Port %d\n" % port)
-                    f.close()
-            else:
-                print "No QoS is found."
-                if log is not None:
-                    f = open(log, "a")
-                    f.write("[+]Port %d, packet loss = %.02f%%\n" % (port, (1.0 - ratio) * 100))
-                    f.close()
+                total_hit = sum(router_hits.values())
+                ratio = total_hit * 1.0 / MAX_PACKETS
+                if ratio < 0.98 and ratio > 0.65:
+                    print "Test %d, QoS found, packet loss = %.02f%%." % (test_count, (1.0 - ratio) * 100)
+                    if no_qos_count + (MAX_TESTS - test_count) - 1 < NO_QOS_THRESHOLD:
+                        break
+                elif ratio < 0.65:
+                    print "[-]The target router doesn't give enough responses."
+                    if log is not None:
+                        f = open(log, "a")
+                        f.write("[?]Port %d\n" % port)
+                        f.close()
+                    break
+                else:
+                    print "Test %d, no QoS is found." % test_count
+                    no_qos_count += 1
+                    if no_qos_count == NO_QOS_THRESHOLD:
+                        print "QoS may not be enabled."
+                        if log is not None:
+                            f = open(log, "a")
+                            f.write("[+]Port %d, packet loss = %.02f%%\n" % (port, (1.0 - ratio) * 100))
+                            f.close()
             if dst_ip in router_hits:
                 # We reached the target!
                 print "We reached the target server."
