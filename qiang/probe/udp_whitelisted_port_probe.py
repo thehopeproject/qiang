@@ -218,7 +218,7 @@ if '__main__' == __name__:
                         f.close()
                     break
                 else:
-                    print "Test %d, packet loss = %02f%%, no QoS is found." % (test_count, (1.0 - ratio) * 100)
+                    print "Test %d, packet loss = %.02f%%, no QoS is found." % (test_count, (1.0 - ratio) * 100)
                     no_qos_count += 1
                     if no_qos_count == NO_QOS_THRESHOLD:
                         print "QoS may not be enabled."
