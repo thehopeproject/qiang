@@ -25,7 +25,7 @@ ROOT_USER_ID = 0
 '''
 Some parameters. Adjust them if needed.
 '''
-MAX_PACKETS = 400   # The number of packets to send during each test
+MAX_PACKETS = 700   # The number of packets to send during each test
 MAX_TESTS = 4       # Repeat the test for each port %MAX_TESTS% times
 NO_QOS_THRESHOLD = 4    # Minimum requirement for a port to be view as no QoS
 
@@ -206,7 +206,7 @@ if '__main__' == __name__:
 
                 total_hit = sum(router_hits.values())
                 ratio = total_hit * 1.0 / MAX_PACKETS
-                if ratio < 0.98 and ratio > 0.65:
+                if ratio < 0.99 and ratio > 0.65:
                     print "Test %d, QoS found, packet loss = %.02f%%." % (test_count, (1.0 - ratio) * 100)
                     if no_qos_count + (MAX_TESTS - test_count) - 1 < NO_QOS_THRESHOLD:
                         break
@@ -218,7 +218,7 @@ if '__main__' == __name__:
                         f.close()
                     break
                 else:
-                    print "Test %d, no QoS is found." % test_count
+                    print "Test %d, packet loss = %02f%%, no QoS is found." % (test_count, (1.0 - ratio) * 100)
                     no_qos_count += 1
                     if no_qos_count == NO_QOS_THRESHOLD:
                         print "QoS may not be enabled."
