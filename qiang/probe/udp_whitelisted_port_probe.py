@@ -224,7 +224,12 @@ if '__main__' == __name__:
                         print "QoS may not be enabled."
                         if log is not None:
                             f = open(log, "a")
-                            f.write("[+]Port %d, packet loss = %.02f%%\n" % (port, (1.0 - ratio) * 100))
+                            if dst_port == 0:
+                                f.write("[+]Dst port %d, packet loss = %.02f%%\n" % (port, (1.0 - ratio) * 100))
+                            elif src_port == 0:
+                                f.write("[+]Src port %d, packet loss = %.02f%%\n" % (port, (1.0 - ratio) * 100))
+                            else:
+                                f.write("[+]Dst port %d, src port %d, packet loss = %.02f%%\n" % (dst_port, src_port, (1.0 - ratio) * 100))
                             f.close()
             if dst_ip in router_hits:
                 # We reached the target!
